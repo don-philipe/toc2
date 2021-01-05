@@ -255,7 +255,7 @@ class NoteList : Collection<NoteListItem>{
 }
 
 data class NoteInfo(val audio44ResourceID: Int, val audio48ResourceID: Int,
-                    val stringResourceID: Int, val drawableResourceID: Int,
+                    val stringResourceID: Int, var drawableResourceID: Int,
                     val vibrationDuration: Long)
 
 val availableNotes = arrayOf(

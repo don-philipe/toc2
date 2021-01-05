@@ -34,6 +34,7 @@ import android.widget.ImageView
 import android.widget.Toast
 import androidx.core.content.ContextCompat
 import androidx.transition.*
+import kotlinx.android.synthetic.main.fragment_metronome.view.*
 import kotlin.math.abs
 import kotlin.math.ceil
 import kotlin.math.min
@@ -91,6 +92,11 @@ class SoundChooser(context : Context, attrs : AttributeSet?, defStyleAttr : Int)
     private val choiceButtonSpacing = choiceButtonSpacingInDp * Resources.getSystem().displayMetrics.density
 
     private var volumePaintColor = Color.BLACK
+
+    /**
+     * The quarter note / eighth note state before the toggle.
+     */
+    private var isEighth = false
 
     private val noteListChangedListener = object: NoteList.NoteListChangedListener {
         override fun onNoteAdded(note: NoteListItem, index: Int) {
@@ -210,6 +216,14 @@ class SoundChooser(context : Context, attrs : AttributeSet?, defStyleAttr : Int)
             visibility = View.GONE
         }
 
+    private val quarterEighthToggleButton = androidx.appcompat.widget.AppCompatImageButton(context)
+        .apply {
+            setImageResource(R.drawable.ic_note_a_eighth)
+            setBackgroundResource(R.drawable.delete_button_background)
+            imageTintList = ContextCompat.getColorStateList(context, R.color.delete_button_icon)
+            scaleType = ImageView.ScaleType.FIT_CENTER
+        }
+
     private var elementElevation = 5.0f
     private var activeTranslationZ = 10.0f
 
@@ -243,6 +257,13 @@ class SoundChooser(context : Context, attrs : AttributeSet?, defStyleAttr : Int)
         deleteButton.setOnClickListener {
 //            Log.v("Notes", "SoundChooser.deleteButton.onClick")
             deleteActiveNoteIfPossible()
+        }
+
+        addView(quarterEighthToggleButton)
+        quarterEighthToggleButton.visibility = View.GONE
+        quarterEighthToggleButton.elevation = elementElevation
+        quarterEighthToggleButton.setOnClickListener {
+            toggleQuarterEighthNotes()
         }
 
         addView(doneButton)
@@ -309,6 +330,10 @@ class SoundChooser(context : Context, attrs : AttributeSet?, defStyleAttr : Int)
 
     private fun measureChoiceBase(measuredWidth: Int, measuredHeight: Int) {
         deleteButton.measure(
+                MeasureSpec.makeMeasureSpec(measuredWidth - 2 * elementPadding.roundToInt(), MeasureSpec.EXACTLY),
+                MeasureSpec.makeMeasureSpec(computeDeleteButtonHeight(), MeasureSpec.EXACTLY)
+        )
+        quarterEighthToggleButton.measure(
                 MeasureSpec.makeMeasureSpec(measuredWidth - 2 * elementPadding.roundToInt(), MeasureSpec.EXACTLY),
                 MeasureSpec.makeMeasureSpec(computeDeleteButtonHeight(), MeasureSpec.EXACTLY)
         )
@@ -409,8 +434,13 @@ class SoundChooser(context : Context, attrs : AttributeSet?, defStyleAttr : Int)
         deleteButton.layout(
                 elementPadding.toInt(),
                 elementPadding.toInt(),
-                elementPadding.toInt() + deleteButton.measuredWidth,
+                elementPadding.toInt() + deleteButton.measuredWidth / 2,
                 elementPadding.toInt() + deleteButton.measuredHeight)
+        quarterEighthToggleButton.layout(
+                elementPadding.toInt() + deleteButton.measuredWidth / 2,
+                elementPadding.toInt(),
+                elementPadding.toInt() + deleteButton.measuredWidth / 2 + quarterEighthToggleButton.measuredWidth / 2,
+                elementPadding.toInt() + quarterEighthToggleButton.measuredHeight)
 
         backgroundView.layout(0, 0, backgroundView.measuredWidth, backgroundView.measuredHeight)
 
@@ -603,6 +633,31 @@ class SoundChooser(context : Context, attrs : AttributeSet?, defStyleAttr : Int)
         }
     }
 
+    /**
+     * Toggle the quarter note / eighth note state. The variables state is toggled at the end of
+     * this function.
+     */
+    private fun toggleQuarterEighthNotes() {
+        if (isEighth) {
+            for (note in availableNotes) {
+                if (note.stringResourceID.equals(R.string.base)) {
+                    note.drawableResourceID = R.drawable.ic_note_a
+                }
+            }
+            for (button in choiceButtons) {
+                //TODO
+            }
+        } else {
+            for (note in availableNotes) {
+                if (note.stringResourceID.equals(R.string.base)) {
+                    note.drawableResourceID = R.drawable.ic_note_a_eighth
+                }
+            }
+        }
+
+        isEighth = !isEighth
+    }
+
     fun animateNote(note : NoteListItem) {
         controlButtons[note]?.animateAllNotes()
     }
@@ -688,6 +743,7 @@ class SoundChooser(context : Context, attrs : AttributeSet?, defStyleAttr : Int)
         choiceStatus = CHOICE_OFF
         runningTransition = TRANSITION_DEACTIVATING
         deleteButton.visibility = View.GONE
+        quarterEighthToggleButton.visibility = View.GONE
         doneButton.visibility = View.GONE
         backgroundView.visibility = View.GONE
         volumeControl.visibility = View.GONE
@@ -726,6 +782,7 @@ class SoundChooser(context : Context, attrs : AttributeSet?, defStyleAttr : Int)
                 })
         backgroundView.visibility = View.VISIBLE
         deleteButton.visibility = View.VISIBLE
+        quarterEighthToggleButton.visibility = View.VISIBLE
         doneButton.visibility = View.GONE
         volumeControl.visibility = View.GONE
         for(c in choiceButtons)
@@ -754,6 +811,7 @@ class SoundChooser(context : Context, attrs : AttributeSet?, defStyleAttr : Int)
         doneButton.visibility = View.VISIBLE
         volumeControl.visibility = View.VISIBLE
         deleteButton.visibility = View.VISIBLE
+        quarterEighthToggleButton.visibility = View.VISIBLE
 
         for(c in choiceButtons) {
             c.visibility = View.VISIBLE
@@ -803,6 +861,7 @@ class SoundChooser(context : Context, attrs : AttributeSet?, defStyleAttr : Int)
         doneButton.visibility = View.GONE
         volumeControl.visibility = View.GONE
         deleteButton.visibility = View.VISIBLE
+        quarterEighthToggleButton.visibility = View.VISIBLE
 
         for(c in choiceButtons)
             c.visibility = View.VISIBLE
